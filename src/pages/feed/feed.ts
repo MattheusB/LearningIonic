@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { IonicPage, NavController, NavParams } from 'ionic-angular';
+import { IonicPage, NavController, NavParams, LoadingController } from 'ionic-angular';
 import { MovieProvider } from '../../providers/movie/movie';
 
 /**
@@ -30,11 +30,16 @@ export class FeedPage {
   public list_films = new Array<any>();
 
   public userName:string = "Mattheus Brito code";
+  public loader;
+
+  public refresher;
+  public isRefreshing: boolean = false;
 
   constructor(
     public navCtrl: NavController, 
     public navParams: NavParams,
-    private movieProvider: MovieProvider
+    private movieProvider: MovieProvider,
+    public loadingCtrl: LoadingController
   ) {
   }
 
@@ -42,17 +47,45 @@ export class FeedPage {
     //alert(num1 + num2);
   }
 
-  ionViewDidLoad() {
+  doRefresh(refresher) {
+    this.refresher = refresher;
+    this.isRefreshing = true;
+    this.loadFilms();
+  }
+
+  ionViewDidEnter() {
+    this.loadFilms();
+  }
+
+  loadFilms(){
+    this.presentLoading();
     this.movieProvider.getLatestMovies().subscribe(
       data =>{
         const response = (data as any);
         this.list_films = response.results
         console.log(response);
+        this.closeLoading();
+        if (this.isRefreshing){
+          this.refresher.complete();
+          this.isRefreshing = false;
+        }
       },error =>{
         console.log(error);
+        this.closeLoading();
       }
       
     );
+  }
+
+  presentLoading() {
+    this.loader = this.loadingCtrl.create({
+      content: "Loading movies...",
+    });
+    this.loader.present();
+  }
+
+  closeLoading(){
+    this.loader.dismiss();
   }
 
 
